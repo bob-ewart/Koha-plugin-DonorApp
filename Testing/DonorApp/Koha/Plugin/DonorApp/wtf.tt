@@ -1,0 +1,20 @@
+[% INCLUDE 'doc-head-open.inc' %]
+ [% title = 'WTF' %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="doc3">
+  [% PROCESS "$ipath/boda_header.inc" %]
+  [% IF description %]
+    Description: <br />
+    <p>[% description %]</p>
+  [% END %]
+[% INCLUDE 'intranet-bottom.inc' %]

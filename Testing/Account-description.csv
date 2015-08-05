@@ -1,0 +1,41 @@
+,,Account,,Type,,Description,,Accnt. #,,Deductible,Increae Expiry,Map To
+,,42000 · Endowment Earnings,,Income,,,,42000,,1,35,
+,,42010 · Endowment - Operating,,Income,,,,42010,,1,35,
+,,42020 · Endowment - Books,,Income,,,,42020,,1,35,
+,,42030 · Endowment - Archive Staffing,,Income,,,,42030,,1,35,
+,,43400 · Direct Public Support,,Income,,"Contributions (including the amount of dues greater than the value of benefits received), gifts, donations, grants, bequests, legacies, pledges",,43400,,0,0,
+,,43410 · Corporate Contributions,,Income,,"Contributions from corporations, sponsorships",,43410,,1,0,43400
+,,"43430 · Donated Prof. Fees, Facilities",,Income,,,,43430,,0,0,43400
+,,43440 · Gifts in Kind - Goods,,Income,,"Donated goods, non-cash gifts and contributions, donated inventory",,43440,,0,0,43400
+,,43450 · Walk In Gifts,,Income,,On Site Collection,,43450,,1,0,43400
+,,43460 · Legacies and Bequests,,Income,,,,43460,,0,0,43400
+,,43500 · Grant Income,,Income,,,,43500,,1,0,
+,,43510 · Agency (Government) Grants,,Income,,,,43510,,1,0,43500
+,,43520 · Federal Grants,,Income,,,,43520,,1,0,43500
+,,43540 · State Grants,,Income,,,,43540,,1,0,43500
+,,44800 · Indirect Public Support,,Income,,"Contributions received through federated fundraising agencies - United Way, CFC, etc.",,44800,,1,0,
+,,44820 · Foundation Support,,Income,,Contributions from Foundations,,44820,,1,0,44820
+,,45000 · Investments,,Income,,"Revenue from investments in cash, securities, and property",,45000,,0,0,
+,,"45030 · Interest-Savings, Short-term CD",,Income,,"Interest received from savings, CDs, and other short-term investments",,45030,,0,0,
+,,46400 · Other Types of Income,,Income,,"Revenue from program-related sales, advertising, etc.",,46400,,0,0,
+,,46430 · Miscellaneous Revenue,,Income,,Revenue from occasional or non-material activities,,46430,,0,0,
+,,46440 · Media Consignment Sales,,Income,,Online sales non taxable,,46440,,0,0,
+,,46450 · Gift Shop Sales,,Income,,,,46450,,0,0,
+,,46451 · Sales Tax,,Income,,Sales tax,,46451,,0,0,
+,,47000 · Earned Revenue,,Income,,,,47000,,0,0,
+,,47200 · Annual Fund,,Income,,Annual gifts to support General Operations,,47200,,1,35,
+,,47230 · Membership Dues,,Income,,"Member dues that compare reasonably with membership benefits available, whether used or not",,47230,,1,35,
+,,47240 · Board Gifts,,Income,,,,47240,,1,35,
+,,47250 · Annual Campaign,,Income,,,,47250,,1,35,
+,,47300 · Events,,Income,,"Participant fees, admissions, royalties, tuition, registration fees, and other program-related income",,47300,,1,0,
+,,47310 · Sponsorship,,Income,,,,47310,,1,0,
+,,47320 · Ticket Sales - VIP,,Income,,,,47320,,1,0,
+,,47325 · Ticket Sales - General,,Income,,,,47325,,1,0,
+,,47330 · Silent Auction,,Income,,,,47330,,0,0,
+,,47500 · Exhibit Rentals,,Income,,Exhibit Rentals,,47500,,0,0,
+,,48000 · Symposium Income,,Income,,"Participant fees, admissions, royalties, tuition, registration fees, and other program-related income",,48000,,0,0,
+,,48100 · Symposium Fees,,Income,,,,48100,,0,0,
+,,49100 · Museum Expansion,,Income,,,,49100,,1,35,
+,,49110 · Individual Support (Museum),,Income,,,,49110,,1,35,
+,,49120 · Foundation Support (Museum),,Income,,,,49120,,1,35,
+,,49130 · Corporate Support (Museum),,Income,,,,49130,,1,35,

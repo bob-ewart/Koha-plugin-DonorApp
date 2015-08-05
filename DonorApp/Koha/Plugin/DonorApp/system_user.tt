@@ -1,0 +1,53 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Application User Update' %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+[% ptypes = ['donate', 'contact', 'group', 'system'] %]
+[% pdesc  = {donate  = 'able to upload QB Date',
+             contact = 'Unused',
+             group   = 'able to create or modify reports',
+             system  = 'able to add/update users and look at logs',
+            } 
+%]
+
+<div id="doc3">
+  [% PROCESS "$ipath/boda_header.inc" %]
+  [% form %]
+    <input type='hidden' name='action' value='System update' />
+    <input type='hidden' name='snmid'  value='[% snmid %]' />
+    <input type='hidden' name='card'   value='[% card %]' />
+    <strong>Card: </strong>[% card %] 
+    [% IF snuser == ' ' %] 
+      <strong>Enter a user id:</strong>
+    [% ELSE %]
+      <strong>User: </strong>
+    [% END %]
+    <input type='text' name='snuser' value='[% snuser %]' size='75' />
+    <br /><br />
+    [% FOREACH p IN ptypes %]
+      [% IF uperms.$p %]
+        <input type='checkbox' name='nperms' value='[% p %]' checked='checked' />&emsp;
+        [% p %] - [% pdesc.$p %]<br />
+      [% ELSE %]
+        <input type='checkbox' name='nperms' value='[% p %]' />&emsp;
+        [% p %] - [% pdesc.$p %]<br />
+      [% END %]
+    [% END %]
+    <br />
+    <input type='submit' name='subaction' value='Update system user' /><br />
+    <input type='submit' name='subaction' value='Delete system user' />
+  </form>
+
+
+[% INCLUDE 'intranet-bottom.inc' %]

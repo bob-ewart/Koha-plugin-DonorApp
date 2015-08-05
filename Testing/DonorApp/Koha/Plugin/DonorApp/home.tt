@@ -1,0 +1,40 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Home' %]
+ <title>Donor App: [% title %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="mydoc">
+
+  [% PROCESS "$ipath/boda_header.inc" %]
+
+
+  [% IF permissions.donate %]
+    <h3>Upload income transfer file</h3>
+    <form method="post" enctype="multipart/form-data">
+    <p>Excel file to upload: <input type="file" name="excel" /></p>
+    <p><input type="submit" name="action" value="Upload" /></p>
+    <input type='hidden' name='method' value='[% METHOD %]' />
+    <input type='hidden' name='class'  value='[% CLASS %]' />
+    </form><br />
+  [% END %]
+    [% PROCESS "$ipath/new_patron.inc" %]
+    <h3>Reports</h3>
+    [% PROCESS "$ipath/select_report.inc" %]
+    [% IF permissions.system %]
+      <h3>System Data</h3>
+      [% form %]
+        <input type='submit' name='action' value='System update' />
+        <input type='hidden' name='subaction' value='System home' />
+      </form>
+    [% END %]
+
+[% INCLUDE 'intranet-bottom.inc' %]

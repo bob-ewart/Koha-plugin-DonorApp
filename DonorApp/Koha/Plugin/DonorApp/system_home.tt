@@ -1,0 +1,46 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'System Options' %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="doc3">
+  [% PROCESS "$ipath/boda_header.inc" %]
+
+  [% form %]
+    <input type='hidden' name='action' value='System update' />
+    <input type='hidden' name='subaction' value='User update' />
+    <table><tr>
+      <th>Card</th><th>User</th><th>Permissions</th></tr>
+      [% FOREACH row IN records %]
+        <tr><td><input type='submit' name='card' value='[% row.0 %]' /></td><td>[% row.1 %]</td><td>[% row.2 %]</td></tr>
+      [% END %]
+    </table>
+  </form>
+  <br />
+  [% form %]
+    <input type='submit' name='subaction' value='Add new user' />
+    <input type='hidden' name='action' value='System update' />
+    Card Number: <input type="text" name="card"  size='6' />&emsp;
+    or Name: <input type='text' name='name' size='30'  />
+  </form>
+  <br />
+  [% form %]
+    <input type='hidden' name='action' value='System update' />
+    <input type='submit' name='subaction' value='Accounts' />to set account parameters<br />
+    <input type='submit' name='subaction' value='Transfer columns' />for accounting transfer file uploads<br />
+    <input type='submit' name='subaction' value='Miscellaneous constants' /><br />
+    <input type='submit' name='subaction' value='Report log' /><br />
+    <input type='submit' name='subaction' value='Use log' /><br />
+  </form>
+
+[% INCLUDE 'intranet-bottom.inc' %]

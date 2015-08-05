@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS bodaaccts;
+DROP TABLE IF EXISTS bodacontact;
+DROP TABLE IF EXISTS bodafunds;
+DROP TABLE IF EXISTS bodalog;
+DROP TABLE IF EXISTS bodadonations;
+DROP TABLE IF EXISTS bodareports;
+DROP TABLE IF EXISTS bodasystem;
+DROP TABLE IF EXISTS bodatrace;
+DROP TABLE IF EXISTS bodausers;

@@ -1,0 +1,69 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Donations Update' %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+
+<div id="doc3">
+  [% PROCESS "$ipath/boda_header.inc" %]
+  [% IF drange %]
+    <h2>Income for [% drange.0 %] through [% drange.1 %]</h2>
+    <p>[% drange.2 %] Records deleted</p>
+ 
+  [% END %]
+  [% IF badFunds %]
+    <h3>Current fund accounts</h3>
+    [% form %]
+      <table><tr><th>Card</th><th>Account</th></tr>
+        [% FOREACH fund IN funds %]
+          <tr><td>[% fund.1 %]</td><td>[% fund.0 %]</td></tr>
+        [% END %]
+        <tr><th>&nbsp;</th><th>&nbsp;</th></tr>
+        <tr><th colspan='2'>Assign these names to one of the above accounts</th></tr>
+        <tr><th>&nbsp;</th><th>&nbsp;</th></tr>
+        [% FOREACH badfund IN badFunds %]
+          <tr><td><input type='text' name='[% badfund.1 %]' /></td><td>[% badfund.0 %]</td></tr>
+        [% END %]
+      </table>
+      <input type='hidden' name='action' value='Upload' />
+      <input type='submit' name='subaction' value='Update funds' />
+    </form>
+  [% END %]
+  
+  [% IF patrons %]
+    <br />
+    <h3>Patron records updated</h3>
+    [% form %]
+      <input type='hidden' name='action' value='Show' />
+      <table>
+        <tr><th>Card</th><th>Name</th><th>Address</th><th>Comment</th></tr>
+        [% FOREACH patron IN patrons %]
+          <tr><td><input type='submit' name='card' value='[% patron.0 %]' /></td><td>[% patron.1 %]</td>
+              <td>[% patron.2 %]</td><td>[% patron.3 %]</td></tr>
+        [% END %]
+      </table>
+    </form>
+  [% END %]
+  
+  [% IF acctTotals %]
+    <br />
+    <h3>Account Totals</h3>
+    <table>
+      <tr><th>Account</th><th>Description</th><th>Total</tr>
+      [% FOREACH key IN acctTotals.keys.sort %]
+        [% account = acctTotals.$key %]
+        <tr><td>[% key %]</td><td>[% account.0 %]</td><td class='aright'>[% account.1 %]</td></tr>
+      [% END %]
+    </table>
+  [% END %]
+[% INCLUDE 'intranet-bottom.inc' %]

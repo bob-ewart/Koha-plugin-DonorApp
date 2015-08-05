@@ -1,0 +1,36 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Select Patron' %]
+ <title>Donor App: [% title %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="doc3">
+
+[% PROCESS "$ipath/boda_header.inc" %]
+
+
+[% form %]
+    <input type='hidden' name='action' value='[% action %]' />
+    <input type='hidden' name='subaction' value='[% subaction %]' />
+<table><tr><th>Card</th><th>Name</th><th>Address</th><th>Score</th></tr>
+
+[% FOREACH card IN cards.keys.sort %]
+[% SET r = cards.$card %]
+<tr><td><input type='submit' name='card' value='[% card %]' /></td>
+<td>[% r.firstname %] [% r.surname %]</td><td>[% r.address %]</td><td>[% r.score %]</td></tr>
+[% END %]
+</table>
+</form>
+<br /> Try Again: <br />
+[% PROCESS "$ipath/new_patron.inc" %]
+
+
+[% INCLUDE 'intranet-bottom.inc' %]

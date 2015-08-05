@@ -1,0 +1,57 @@
+[% INCLUDE 'doc-head-open.inc' %]
+ <title>Donor App: Trace control</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="mydoc">
+
+  [% tdesc = { '0001'='Main tool', '0002' = 'Find patron', '0004'='Get data', '0008'='Save Report', '0016'='Edit Report', '0032'='System', '0064'='Upload', '0128'='trace routine', '0256' = 'funds' , '0512' = 'Swap', '1024' = 'Configure' } %]
+
+  [% PROCESS "$ipath/boda_header.inc" %]
+  [% form %]
+    [% allkeys = 0 %]
+    [% FOREACH key IN tdesc.keys.sort %]
+      [% key2 = key + 0 %]
+      [% allkeys = allkeys + key2 %]
+      <input type='checkbox' name='traces' value='[% key2 %]' [% traces.$key2 %]/> [% key2 %] - [% tdesc.$key %]<br />
+    [% END %]
+    <input type='checkbox' name='traces' value='[% allkeys %]' /> [% allkeys %] - Trace everything</br /><br />
+    <input type='submit' name='tsubaction' value='Save' /> the trace options</br>
+    <input type='submit' name='tsubaction' value='Stop' /> tracing</br>
+    <input type='submit' name='tsubaction' value='Clear' /> the trace file</br>
+    <input type='hidden' name='taction' value='trace' />
+  </form>
+ <br />
+ <h3> current action=[% action %], subaction=[% subaction %]<h3>
+ [% IF records %] 
+    <h3> Trace Records </h3>
+  <table>
+    <tr>
+      [% FOREACH head IN headers %]
+        <th>[% head %]</th>
+      [% END %]
+    </tr>
+    [% FOREACH row IN records %]
+      <tr>
+        [% FOREACH x IN row %]
+          [% IF x.last %]
+            <td><pre>[% x %]</pre></td>
+          [% ELSE %]
+            <td>[% x %]</td>
+          [% END %]
+        [% END %]
+      </tr>
+    [% END %]
+  </table>
+  [% ELSE %]
+    <h3> No Trace Records</h3>
+  [% END %]
+[% INCLUDE 'intranet-bottom.inc' %]

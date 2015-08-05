@@ -1,0 +1,34 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Transfer Columns' %]
+<title>Donor App: [% title %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/boda_header.inc" %]
+
+<h2>Please enter the columns as A through Z AA AB and so on</h2>
+[% form %]
+  <input type='hidden' name='action' value='System update' />
+  <table><tr>
+    <th colspan='2'>Required fields</th></tr>
+    [% FOREACH field IN requiredFields %]
+      <tr><td>[% field.0 %]</td><td><input type='text' name='[% field.0 %]' value='[% field.1 %]' /></td></tr>
+    [% END %]
+    <th colspan='2'>Optional fields</th></tr>
+    [% FOREACH field IN optionalFields %]
+    <tr><td>[% field.0 %]</td><td><input type='text' name='[% field.0 %]' value='[% field.1 %]' /></td></tr>
+    [% END %]
+  </table>
+  <br />
+  <p>Even though some of the above fields are optional it is strongly recommended 
+  that your transfer spreadsheet have all of them.  A dash (-) or blank indicates that they are not present.</p>
+  <br />
+  <input type='submit' name='subaction' value='Update transfer columns' /><br />
+</form>
+
+[% INCLUDE 'intranet-bottom.inc' %]

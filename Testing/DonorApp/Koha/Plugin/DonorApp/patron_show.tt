@@ -1,0 +1,69 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Show Patron' %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="bodaMain">
+
+
+[% PROCESS "$ipath/boda_header.inc" %]
+
+<table> <tr><td>
+[% PROCESS "$ipath/patron_block.inc" %]
+[% IF donations %]
+  <h3>Donations</h3>
+  [% yearList = donations.keys.nsort %]
+  [% prows = yearList.size + 15 %]
+  [% form %]
+    <input type='hidden' name='card' value='[% card %]' />
+  <input type='hidden' name='action' value='Year' />
+  <table>
+  [% WHILE yearList.size %]
+    [% year = yearList.pop %]
+    <tr><th>
+    <input type='submit' name='year' value='[% year %]' />
+    </th><td style='text-align:right'>[% donations.$year %]</td></tr>
+  [% END %]
+  <tr><th>Total</th><td style='text-align:right'>[% total %]</td></tr>
+  </table>
+  </form>
+[% ELSE %]
+  <h3>No Donations</h3>
+[% END %]
+</td><td>&emsp;&emsp;</td><td>
+[% IF patron.has_picture %]
+<img src="/cgi-bin/koha/members/patronimage.pl?borrowernumber=[% patron.borrowernumber %]" id="patronimage" alt="[% patron.firstname %] [% patron.surname %] ([% patron.cardnumber %])" border="0" style="max-width : 140px; margin: .3em 0 .3em .3em; padding: .2em; border: 1px solid #CCCCCC; width:auto !important; width:130px;" />
+[% END %]
+
+<h3>New Comment</h3>
+[% form %]
+  <textarea rows='5' cols='50' name='comments' placeholder='Add a Comment'></textarea>
+  <br /><input type='submit' name='subaction' value='Add Comment' />
+  <input type='hidden' name='card' value='[% card %]' />
+  <input type='hidden' name='action' value='Show' />
+  [% IF prevComments %]
+    <br /><h3>Previous Comments</h3>
+    <textarea rows='[% prows %]' cols='50' readonly >
+    [% prevComments %]
+    </textarea>
+  [% ELSE %]
+    <br /><h3>No previous comments -- Please add one</p>
+  [% END %]
+</form>
+  
+</td></tr></table>
+
+[% PROCESS "$ipath/new_patron.inc" %]
+
+
+[% INCLUDE 'intranet-bottom.inc' %]

@@ -1,0 +1,41 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = subaction %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="doc3">
+  [% PROCESS "$ipath/boda_header.inc" %]
+  [% form %]
+    <table>
+      <tr>
+        [% FOREACH head IN headers %]
+          <th>[% head %]</th>
+        [% END %]
+      </tr>
+      [% FOREACH row IN records %]
+        <tr>
+          <td><input type='text' name='account' value='[% row.0 %]' size='9' readonly /></td>
+          <td><input type='text' name='description' value='[% row.1 %]' size='30' readonly /></td>
+          <td>[% IF row.2 %] <input type='checkbox' name='ded' value='[% row.0 %]' checked />
+              [% ELSE %]     <input type='checkbox' name='ded' value='[% row.0 %]' />
+              [% END %]</td>
+          <td><input type='text' name='incexp' value='[% row.3 %]' size='5'/></td>
+          <td><input type='text' name='map_to' value='[% row.4 %]' size='9'/></td>
+        </tr>
+      [% END %]
+    </table>
+    <input type='hidden' name='action' value='System update' />
+    <input type='submit' name='subaction' value='Update accounts' />
+  </form>
+
+[% INCLUDE 'intranet-bottom.inc' %]

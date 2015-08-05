@@ -1,0 +1,47 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Create Tables' %]
+<title>Donor App: [% title %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/boda_header.inc" %]
+
+
+
+<div id="doc3">
+
+[% IF card %]<p>User: [% name %] ([% card %]) granted all privileges</p>[% END %]
+
+<form method="post" enctype="multipart/form-data">
+<p>Account excel file to Upload: <input type="file" name="excel" /></p>
+
+<table>
+  <tr><td>Account number column</td><td><input type='text' name='colacct' value='C' /></td></tr>
+  <tr><td>Account description column</td><td><input type='text' name='coldesc' value='-' /></td><td>Optional</td></tr>
+  <tr><td>Deductible column</td><td><input type='text' name='colded' value='K'/></td><td>Optional (value is 1 or 0)</td></tr>
+  <tr><td>Update expiry column</td><td><input type='text' name='colincexp' value='L' /></td><td>Optional (minimum abmount to increase expiry date)</td></tr>
+  <tr><td>Account map to column</td><td><input type='text' name='colmap'  value='M' /></td><td>Optional (value is another account)</td></tr>
+  <tr><td>New account flag</td><td><input type='text' name='colqb'  value='-' /></td><td>Optional default value is 1</td></tr>
+</table>
+<p>Leave the optional columns blank when that data is not in the uploaded excel file</p>
+<p>If the account description column is blank, the description will be taken from the account column in the format "number &bull; description".  The number need not be all digits, but must not have spaces.  The &bull; separator is optional</p> 
+<p>The new account flag is used to sort old account numbers (from a previous accounting package?) from the new ones.  Account
+descriptions on the report creation page are sorted by this value decending so that old account are at the end of the list.
+Old accounts should be mapped to the equivalent new one.  Selecting that new account would automatically pick up the old one</p>
+<br />
+<p><input type="submit" name="action" value="Upload account descriptions" /></p>
+<input type='hidden' name='method' value='[% METHOD %]' />
+<input type='hidden' name='class'  value='[% CLASS %]' />
+</form><br />
+
+[% form %]
+  <input type='submit' name='action' value='Create tables' /> This will over write all Donor App tables including accounts<br />
+  <input type='submit' name='action' value='Done' /> with configuration, return to Koha<b />
+</form>
+  
+[% INCLUDE 'intranet-bottom.inc' %]

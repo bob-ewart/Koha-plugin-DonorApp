@@ -1,0 +1,209 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Edit Report' %]
+ <title>App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+
+<div id="mydoc">
+  [% PROCESS "$ipath/boda_header.inc" %]
+
+  [% form %]
+  <table >
+    <tr ><th >Report name:</th>
+    [% IF subaction == 'New' %]
+      <td ><input type='text' name='report_name' /> </td></tr>
+    [% ELSE %]
+      <td >([% repid %]) [% repdef.report_name %]
+       <input type='hidden' name='report_name' value='[% repdef.report_name %]'</td></tr>
+    [% END %]
+    <tr ><th >Description:</th>
+    <td ><textarea rows='4' cols='50'  name='notes' placeholder='Describe the report'>[% repdef.notes %]</textarea> </td></tr>
+  </table><br />
+  <h4>Borrower fields to show</h4>
+  [% allfields = ['Full_Name', 'First_Name', 'Surname', 'Address1', 'Address2', 'City', 'State',
+                  'ZIP', 'CityStZip', 'Phone', 'Email', 'Joined', 'Expiry'] %]
+  [% selfields = repdef.field %]
+  [% FOREACH field IN allfields %]
+    [% IF selfields.$field %]
+      <input type='checkbox' name='field' value='[% field %]' checked />[% field %]
+    [% ELSE %]
+      <input type='checkbox' name='field' value='[% field %]' />[% field %]
+    [% END %]
+  [% END %]
+  [% IF repdef.multibranch %]
+    [% IF selfields.Branch %]
+        <input type='checkbox' name='field' value='Branch' checked />Branch
+    [% ELSE %]
+      <input type='checkbox' name='field' value='Branch' />Branch
+    [% END %]
+  [% END %]
+  <h4>Selection criteria:</h4>
+  <table >
+    <tr ><th >Expiry date:</th>
+      <td >From<td ><input type='text' name='expfrom' value='[% repdef.expfrom %]' /></td>
+      <td >Thru<td ><input type='text' name='expto' value='[% repdef.expto %]' /></td></tr>
+    <tr ><th >Zipcode:</th>
+      <td >From<td ><input type='text' name='zipfrom' value='[% repdef.zipfrom %]' /></td>
+      <td >Thru<td ><input type='text' name='zipto' value='[% repdef.zipto %]' /></td></tr>
+    <tr ><th >Email:</th>
+      [% IF repdef.email == 'must' %]
+        <td  colspan='2'><input type='checkbox' name='email' value='must' checked />&emsp;Must have email</td>
+      [% ELSE %]
+        <td  colspan='2'><input type='checkbox' name='email' value='must' />&emsp;Must have email</td>
+      [% END %]
+      [% IF repdef.email == 'not' %]
+        <td  colspan='2'><input type='checkbox' name='email' value='not' checked />
+          &emsp;Must <strong>not</strong> have email</td></tr>
+      [% ELSE %]
+        <td  colspan='2'><input type='checkbox' name='email' value='not' />
+          &emsp;Must <strong>not</strong> have email</td></tr>
+      [% END %]
+  <tr ><th >&nbsp;</th></tr>
+  <tr ><th  colspan='5'>Donations:</th></tr>
+    <tr ><th >Dates:</th>
+      <td >From<td ><input type='text' name='donfrom' value='[% repdef.donfrom %]' /></td>
+      <td >Thru<td ><input type='text' name='donto' value='[% repdef.donto %]' /></td></tr>
+    <tr ><th >Amount:</th>
+      <td >From<td ><input type='text' name='lowamt' value='[% repdef.lowamt %]' /></td>
+      <td >Thru<td ><input type='text' name='highamt' value='[% repdef.highamt %]' /></td></tr>
+    <tr ><th >Description:</th>
+      <td >&nbsp;<td ><input type='text' name='searchdesc' value='[% repdef.searchdesc %]' /></td></tr>
+      
+ <tr ><th  colspan='5'>Ledger accounts:</th></tr>
+    <tr ><th >Limit<br />accounts<br />to:</th>
+      <td  colspan='4'><select name='acctlim' multiple style='width: 100%'>
+      [% selaccts = repdef.acctlim %]
+      <p> selaccts =  [% selaccts %] </p>
+      [% FOREACH account IN accounts %]
+        [% acctno = account.0 %]
+        [% IF selaccts.$acctno %]
+          <option value='[% acctno %]' selected >[% account.0 %] - [% account.1 %]</option>
+        [% ELSE %]
+          <option value='[% account.0 %]' >[% account.0 %] - [% account.1 %]</option>
+        [% END %]
+      [% END %]
+      </select>
+      </td>
+    </tr>
+
+ <tr ><td >&nbsp;</td></tr>
+ <tr ><th  colspan='5'>Patron categories</th></tr>
+    <tr ><th >Limit<br />categories<br />to:</th>
+      <td  colspan='4'><select name='catcodes' multiple style='width: 100%'>
+      [% selcats = repdef.catcodes %]
+      [% FOREACH category IN categories %]
+        [% IF selcats.$category.0 %]
+          <option value='[% category.0 %]' selected >[% category.0 %] - [% category.1 %]</option>
+        [% ELSE %]
+          <option value='[% category.0 %]' >[% category.0 %] - [% category.1 %]</option>
+        [% END %]
+      [% END %]
+      </select>
+      </td>
+    </tr>
+[% IF repdef.multibranch %]
+  <tr ><td >&nbsp;</td></tr>
+  <tr ><th  colspan='5'>Branches</th></tr>
+    <tr ><th >Limit<br />branches<br />to:</th>
+      <td  colspan='4'><select name='branches' multiple style='width: 100%'>
+      [% selbranch = repdef.branches %]
+      [% FOREACH branch IN branchtbl %]
+        [% IF selbranch.$branch.0 %]
+          <option value='[% branch.0 %]' selected >[% branch.0 %] - [% branch.1 %]</option>
+        [% ELSE %]
+          <option value='[% branch.0 %]' >[% branch.0 %] - [% branch.1 %]</option>
+        [% END %]
+      [% END %]
+      </select>
+      </td>
+    </tr>
+[% END %]
+[% IF repdef.selcodes %]
+  <tr ><td >&nbsp;</td></tr>
+  <tr ><th  colspan='5'>Select codes</th></tr>
+  <tr ><th >Limit<br />select codes<br />to:</th>
+    <td  colspan='4'><select name='selcodes' multiple style='width: 100%'>
+    [% selcode = repdef.selcodes %]
+    [% FOREACH select IN selectcodes %]
+      [% selectno = select.0 %]
+      [% IF selcode.$selectno %]
+        <option value='[% selectno %]' selected >[% select.0 %] - [% select.1 %]</option>
+      [% ELSE %]
+        <option value='[% select.0 %]' >[% select.0 %] - [% select.1 %]</option>
+      [% END %]
+    [% END %]
+    </select>
+    </td>
+  </tr>
+[% END %]  
+  <tr ><td >&nbsp;</td></tr>
+  <tr ><th  colspan='5'>Show donations as:</th></tr>
+    <tr ><td colspan='5'>
+      [% IF repdef.tottype == 'total' %]
+        <input type='radio' name='tottype' value='total' checked >Totals&emsp;
+      [% ELSE %]
+        <input type='radio' name='tottype' value='total' >Totals&emsp;
+      [% END %]
+      [% IF repdef.tottype == 'individual' %]
+        <input type='radio' name='tottype' value='individual' checked >Individual amounts&emsp;
+      [% ELSE %]
+      <input type='radio' name='tottype' value='individual' >Individual amounts&emsp;
+      [% END %]
+      [% IF repdef.tottype == 'none' %]
+      <input type='radio' name='tottype' value='none' checked >None&emsp;
+      [% ELSE %]
+      <input type='radio' name='tottype' value='none' >None&emsp;
+      [% END %]
+      </td>
+    </tr>
+    <tr ><td >&nbsp;</td></tr>
+    <tr ><th  colspan='5'>Order by:</th></tr>
+    <tr >
+      <td colspan='5'>
+      [% IF repdef.orderby == 'card' %]
+      <input type='radio' name='orderby' value='card' checked >Card&emsp;
+      [% ELSE %]
+      <input type='radio' name='orderby' value='card' >Card&emsp;
+      [% END %]
+      [% IF repdef.orderby == 'surname' %]
+      <input type='radio' name='orderby' value='surname' checked >Surname&emsp;
+      [% ELSE %]
+      <input type='radio' name='orderby' value='surname' >Last name&emsp;
+      [% END %]
+      [% IF repdef.orderby == 'total' %]
+      <input type='radio' name='orderby' value='total' checked >Total&emsp;
+      [% ELSE %]
+      <input type='radio' name='orderby' value='total' >Total&emsp;
+      [% END %]
+      [% IF repdef.orderby == 'zip' %]
+      <input type='radio' name='orderby' value='zip' checked >ZIP code&emsp;
+      [% ELSE %]
+      <input type='radio' name='orderby' value='zip' >ZIP code&emsp;
+      [% END %]
+    </td>
+    </tr>
+  </table><br />
+  [% IF subaction == 'New' %]
+    <input type='submit' name='subaction' value='Save' />&emsp;
+  [% ELSE %]
+    <input type='submit' name='subaction' value='Update' />&emsp;
+    <input type='submit' name='subaction' value='Delete' />&emsp;
+    <input type='submit' name='subaction' value='Run' />&emsp;
+  [% END %]
+  <input type='hidden' name='repid' value='[% repid %]' />
+  <input type='hidden' name='reportname' value='[% repdef.report_name %]' />
+  <input type='hidden' name='action' value='Reports' />
+  <input type='submit' name='subaction' value='New' />&emsp;
+
+</form>
+[% INCLUDE 'intranet-bottom.inc' %]

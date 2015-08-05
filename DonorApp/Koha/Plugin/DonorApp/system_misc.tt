@@ -1,0 +1,50 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Miscellaneous Constants' %]
+<title>Donor App: [% title %]</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/boda_header.inc" %]
+
+<div id="doc3">
+
+  <h3>Organization Flags</h3>
+  <p>When a new name without a card number is uploaded by the income transfer upload,
+  the following fragments are used to tell that it is an organization rather than a person</p>
+  <p>Code spaces as \s, single quotes as \' and periods as \.  When in doubt, put a back slash (\) in front of it.
+  Put a caret (^) before something which must start the name or a dollar sign ($) after something which must end the name; 
+  e.g. the "Co$" below would find a name such as "My Store, Co". For more information, see a description of Perl pattern matching</p>
+
+  [% form %]
+  [% FOREACH flag IN BusinessFlags %] <input type='text' name='bflag' value="[% flag %]" >&nbsp;[% END %]
+  [% blanks = [1..5] %]
+  [% FOREACH num IN blanks %]<input type = 'text' name='bflag' > &nbsp;[% END %]
+  <br /><br />
+  <table><tr><th colspan='3'>Patron codes generated from the above</th></tr>
+  <tr><th>Organization category:</th><td><input type='text' name='catBUS' value='[% category.bus %]' size = '10' ></td></tr>
+  <tr><th>Individual category:</th><td><input type='text' name='catIND' value='[% category.ind %]' size = '10' ></td></tr>
+  <tr><th>Branch Code:</th><td><input type='text' name='branch' value='[% category.branch %]' size = '10' ></td></tr>
+  <tr><td colspan='3'>&nbsp</td></tr>
+  <tr><th colspan='3'>Attribute codes</th></tr>
+  <tr><th>OK to mail:</th><td><input type='text' name='mail' value='[% attribute.mail %]' size = '10' ></td>
+      <td>Yes or No</td></tr>
+  <tr><th>OK to publish:</th><td><input type='text' name='publish' value='[% attribute.publish %]' size = '10' ></td>
+      <td>Yes or No</td></tr>
+  <tr><th>Family:</th><td><input type='text' name='family' value='[% attribute.family %]' size = '10' ></td>
+      <td>Once per family member, value is patron card number</td></tr>
+  <tr><th>Select:</th><td><input type='text' name='select' value='[% attribute.select %]' size = '10' ></td>
+       <td>A number of codes used to group patrons</td></tr>
+  </table>     
+
+  <input type='submit' name='subaction' value='Update miscellaneous constants' >
+  <input type='hidden' name='snmid'  value='[% snmid %]' />
+  <input type='hidden' name='card'   value='[% card %]' />
+  <input type='hidden' name='action' value='System update' >
+</form>
+
+[% INCLUDE 'intranet-bottom.inc' %]

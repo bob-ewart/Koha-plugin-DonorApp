@@ -1,0 +1,33 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = subaction %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="doc3">
+  [% PROCESS "$ipath/boda_header.inc" %]
+  <table>
+    <tr>
+      [% FOREACH head IN headers %]
+        <th>[% head %]</th>
+      [% END %]
+    </tr>
+    [% FOREACH row IN records %]
+      <tr>
+        [% FOREACH x IN row %]
+          <td>[% x %]</td>
+        [% END %]
+      </tr>
+    [% END %]
+  </table>
+
+[% INCLUDE 'intranet-bottom.inc' %]

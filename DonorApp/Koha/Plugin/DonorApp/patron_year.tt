@@ -1,0 +1,48 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Year Detail' %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+<div id="doc3">
+[% PROCESS "$ipath/boda_header.inc" %]
+
+[% PROCESS "$ipath/patron_block.inc" %]
+<!-- dondate,donamt,description,acctdesc,deductible -->
+[% IF patron.categorycode == 'FUND' %]
+  [% col6head = 'For' %]
+[% ELSE %]
+  [% col6head = 'Fund' %]
+[% END %]
+[% form %]
+<input type='hidden' name='action' value='Show' />
+<table><tr><th>Date</th><th>Amount</th><th>Description</th><th>Account</th><th>Deductible</th><th>[% col6head %]</th></tr>
+  [% FOREACH r IN yeardon %]
+      <tr>
+        <td>[% r.dondate %]</td>
+        <td style='text-align:right'>[% r.donamt %]</td>
+        <td>[% r.description %]</td>
+        <td>[% r.acctdesc %]</td>
+        [% IF r.deductible %] <td>Yes</td>
+        [% ELSE %] <td>No</td>[% END %]
+        <td>[% r.fund %]</td>
+      </tr>
+  [% END %]
+  [% IF total != ded %]
+    <tr><th>Deductible</th><td style='text-align:right'>[% ded %]</td></tr>
+  [% END %]
+  <tr><th>Total</th><td style='text-align:right'>[% total %]</td></tr>
+</table>
+</form>
+[% PROCESS "$ipath/new_patron.inc" %]
+
+[% INCLUDE 'intranet-bottom.inc' %]

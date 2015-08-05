@@ -1,0 +1,69 @@
+[% INCLUDE 'doc-head-open.inc' %]
+[% title = 'Selected Report' %]
+ <title>Donor App: [% title %]</title>
+
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE "$ipath/boda.css" %]
+</head>
+<body>
+<!-- header.inc -->
+[% INCLUDE 'header.inc' %]
+<!-- cat-search -->
+[%# INCLUDE 'cat-search.inc' %]
+<!-- breadcrumbs -->
+[% PROCESS "$ipath/breadcrumb.inc" %]
+
+
+<div id="doc3">
+  [% PROCESS "$ipath/boda_header.inc" %]
+  <h2>([% repid %]) [% report_name %]</h2>
+  <p>[% description %]</p>
+  <br />
+  [% form %]
+    <input type='hidden' name='action' value='Reports' />
+    <input type='hidden' name='repid'  value='[% repid %]' />
+    <input type='hidden' name='report_name' value='[% report_name %]' />
+    <input type='hidden' name='excelFile' value='[% excelFile %]' />
+    <input type='submit' name='subaction' value='Download' />this data<br />
+    [% IF permissions.group %]
+    <input type='submit' name='subaction' value='Run' /> this report again<br />
+    <input type='submit' name='subaction' value='Edit' /> the selection criteria for this report<br />
+    <input type='submit' name='subaction' value='New' /> report<br />
+    <input type='submit' name='subaction' value='Delete'
+           onclick="return confirm('Are you sure you want to delete this record?')" />this report<br />
+    [% END %]
+  </form>
+  [% form %]
+  <input type='hidden' name='action' value='Show' />
+
+  <br />
+  <br />[% records.size %] records retrieved<br />
+  [% IF dump %]
+    <h3>Dump</h3>
+    <p>[% dump %]</p>
+  [% END %]
+  <table>
+    <tr>
+      [% FOREACH head IN headers %]
+        <th>[% head %]</th>
+      [% END %]
+    </tr>
+    [% FOREACH row IN records %]
+      <tr>
+        [% n = row.size - 1 %]
+
+        [% FOREACH i IN [0 .. n] %]
+          [% IF formats.$i == 2 %]
+            <td class='aright'>[% row.$i %]</td>
+          [% ELSIF formats.$i == 1 %]
+          <td><input type='submit' name='card' value='[% row.$i %]' />
+          [% ELSE %]
+            <td>[% row.$i %]</td>
+          [% END %]
+        [% END %]
+      </tr>
+    [% END %]
+  </table>
+  </form>
+
+[% INCLUDE 'intranet-bottom.inc' %]
