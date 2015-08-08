@@ -90,17 +90,6 @@ sub new {
 
 
 
-## This method will be run just before the plugin files are deleted
-## when a plugin is uninstalled. It is good practice to clean up
-## after ourselves!
-sub uninstall() {
-  my ( $self, $args ) = @_;
-  require  DonorApplib::Configure;
-  DonorApplib::Configure->import();
-  do_mysql_source($self,ipath()."/boda-table-drop.sql");
-  return 1;
-}
-
 ## The existance of a 'tool' subroutine means the plugin is capable
 ## of running a tool. The difference between a tool and a report is
 ## primarily semantic, but in general any plugin that modifies the
