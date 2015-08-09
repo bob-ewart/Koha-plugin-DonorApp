@@ -28,7 +28,10 @@
   <table><tr><th colspan='3'>Patron codes generated from the above</th></tr>
   <tr><th>Organization category:</th><td><input type='text' name='catBUS' value='[% category.bus %]' size = '10' ></td></tr>
   <tr><th>Individual category:</th><td><input type='text' name='catIND' value='[% category.ind %]' size = '10' ></td></tr>
-  <tr><th>Branch Code:</th><td><input type='text' name='branch' value='[% category.branch %]' size = '10' ></td></tr>
+  <tr><th>Fund category:</th><td><input type='text' name='catFUND' value='[% category.fund %]' size = '10' ></td></tr>
+  <tr><th>Branch code:</th><td><input type='text' name='branch' value='[% category.branch %]' size = '10' ></td></tr>
+  <tr><th>Unknown donor:</th><td><input type='text' name='unknown' value='[% category.unknown %]' size= '20' ></td>
+      <td>Patron name for anonymous donations</td></tr>
   <tr><td colspan='3'>&nbsp</td></tr>
   <tr><th colspan='3'>Attribute codes</th></tr>
   <tr><th>OK to mail:</th><td><input type='text' name='mail' value='[% attribute.mail %]' size = '10' ></td>

@@ -51,6 +51,7 @@ our ( @businessFlag,
       %Attributes,
       %Branches,
       %Categories,
+      %System,
       $multibranch,
    #   $logo,
 );
@@ -84,6 +85,7 @@ sub new {
     get_branchCodes();
     get_categoryCodes();
     get_attributes();
+    get_system_misc();
   #  $logo = C4::Context->config('pluginsdir')."/Koha/Plugin/DonorApp/includes/boda-logo.gif";
     return $self;
 }
@@ -111,6 +113,15 @@ sub tool {
   my $sth = $dbh->prepare("SELECT snuser, permissions FROM bodausers WHERE cardnumber=?");
   $sth->execute($cardnumber);
   my ($snuser,$snperm) = $sth->fetchrow_array;
+  if (!$snuser || !$snperm) {
+    my $template = $self->get_template({file => 'wtf.tt'});
+    $template->param('message',"Card $cardnumber not authorized");
+    $template->param('description','See your supervisor for authorization');
+    $template->param('ipath',ipath());
+    print $cgi->header;
+    print $template->output;
+    return 0;
+  }
   my $trace = $self->retrieve_data('mytrace') || 0;
   my $taction = scalar $cgi->param('taction') || '';
   if ($taction eq 'trace') {
@@ -127,10 +138,7 @@ sub tool {
       }
       $sth->execute("->".$action,$subaction,join(', ',@pvalues));
     }
-    if (!$snuser) {
-      $action = 'Home';
-      $message = "User not authorized";
-    } elsif (!$action) {
+  if (!$action) {
       $sth = $dbh->prepare("INSERT INTO bodalog SET loggedon=NOW(), snuser=?");
       $sth->execute($snuser);
       $action = 'Home';
@@ -229,9 +237,10 @@ sub tool_upload {
     while (($fundname,$fundcard) = $fchk->fetchrow_array) {
       my $newCard = fixup_cardnumber(' ');
       my %borrower = (surname=>$fundname,address=>' ',cardnumber=>$newCard,
-                      city=>' ',zipcode=>'00000',categorycode=>'FUND',
-                      branchcode=>'SLA',privacy=>1);
-      if (!AddMember(%borrower)) {
+                      city=>' ',zipcode=>'00000',categorycode=>$System{fund},
+                      branchcode=>'$categories{branch}',privacy=>1);
+      ($trace & 64) && $sttrace->execute("Upload","Add Fund","$fundname, $newCard");
+      if (! &AddMember(%borrower)) {
         $message .= "$fundname error, ";
       } else {
         $stdf->execute($newCard,$fundcard);
@@ -365,7 +374,7 @@ sub tool_show {
       ($trace & 16) && $sttrace->execute('picture',$borrower->{cardnumber},($borrower->{has_picture})?'has Picture':'No Picture');
       my %donations;
 
-      if ($borrower->{categorycode} eq 'FUND') {
+      if ($borrower->{categorycode} eq $System{fund}) {
         $sth = $dbh->prepare("SELECT sum(donamt) total, year(dondate) dyear ".
                              "FROM bodadonations WHERE cardnumber=? or fund=?".
                              "group by dyear order by dyear desc");
@@ -431,7 +440,7 @@ sub tool_year {
 
   $dbh = C4::Context->dbh;
   my $sttrace = $dbh->prepare("INSERT INTO bodatrace SET action=?,subaction=?,parm=?");
-  if ($borrower->{categorycode} eq 'FUND') {
+  if ($borrower->{categorycode} eq $System{fund}) {
     $sth = $dbh->prepare("SELECT dondate,donamt,description,acctdesc,deductible,cardnumber,fund ".
                           "FROM bodadonations d left join bodaaccts a on (d.donacct = a.donacct) ".
                           " WHERE (cardnumber = ? or fund=?) AND year(dondate) = ? ORDER BY dondate");
@@ -582,7 +591,7 @@ sub tool_reports {
                                         City State ZIP Phone Email Expiry Branch/));
         $repdef->{tottype} = 'total';
         $repdef->{orderby} = 'card';
-      } elsif ($subaction eq 'Edit') {                         # Get the report definition
+      } elsif (($subaction eq 'Edit') || ($subaction eq 'Fix')) {          # Get the report definition
         $qrep = $dbh->prepare("SELECT * FROM bodareports WHERE repid=?");
         $qrep->execute($repid);
         $repdef = $qrep->fetchrow_hashref;
@@ -816,16 +825,14 @@ sub tool_system {
       $miscCategory{$miscName} = $miscValue;
     }
     $template->param('category',\%miscCategory);
-    my $miscOut = Dumper(\%miscCategory);
-    ($trace & 32) && $sttrace->execute("System","Show category",$miscOut);
+    ($trace & 32) && $sttrace->execute("System","Show category",fix_html(Dumper(\%miscCategory)));
     
     $stmisc->execute('attribute');
     while (($miscName,$miscValue) = $stmisc->fetchrow_array) {
       $miscAttribute{$miscName} = $miscValue;
     }
     $template->param('attribute',\%miscAttribute);
-    $miscOut = Dumper(\%miscAttribute);
-    ($trace & 32) && $sttrace->execute("System","Show attributes",$miscOut);
+    ($trace & 32) && $sttrace->execute("System","Show attributes",fix_html(Dumper(\%miscAttribute)));
     
     
   } elsif ($subaction eq 'Update miscellaneous constants') {
@@ -847,6 +854,8 @@ sub tool_system {
     $upSystem->execute(scalar($cgi->param('catBUS')),'bus','category');
     $upSystem->execute(scalar($cgi->param('catIND')),'ind','category');
     $upSystem->execute(scalar($cgi->param('branch')),'branch','category');
+    $upSystem->execute(scalar($cgi->param('fund')),'fund','category');
+    $upSystem->execute(scalar($cgi->param('unknown')),'unknown','category');
     $message = 'Miscellaneous constants updated';
     $subaction = 'System home';
   }
@@ -982,7 +991,7 @@ sub get_data {
   push @$headers,$Attributes{select} if $Attributes{select};
   push @$headers,$Attributes{mail} if $Attributes{mail};
   push @$headers,$Attributes{publish} if $Attributes{publish};
-  push @$headers,(qw/ Partner Name Email/) if $Attributes{family};
+  push @$headers,($Attributes{family},'Name','Email') if $Attributes{family};
   shift @$headers;                            # drop borrowernumber header
   my $columnCount = scalar(@$headers) -4;
   my @blankrow;
@@ -1377,7 +1386,7 @@ sub upload_qb {
   my ($dondate,$donname,$donstr1,$donstr2,$doncity,$donstate,
       $donphone,$donemail,$doncard,$donmemo,$donacct,$donamt,$donbranch) = @blanks;
   my $donzip = '00000';
-  $donbranch=$Categories{branch} if $Categories{branch};
+  $donbranch=$System{branch} if $System{branch};
 
   my ($coldate,$colname,$colstr1,$colstr2,$colcity,$colstate,$colzip,
       $colphone,$colemail,$colcard,$colmemo,$colacct,$colamt,$colbranch);
@@ -1420,15 +1429,6 @@ sub upload_qb {
     }
   }
 
-  #----
-  # Get category/branch codes
-  #----
-  $sth = $dbh->prepare("SELECT name,value FROM bodasystem WHERE type='category'");
-  $sth->execute;
-  while (my ($catName,$catValue) = $sth->fetchrow_array) {
-    $Categories{$catName} = $catValue;
-  }
-
   #-------------------
   # Open the Spreadsheet and get the second sheet
   #------------=------
@@ -1436,7 +1436,7 @@ sub upload_qb {
 
   my $book = ReadData($xlsxin);
   if (!$book) {
-    return ("$xlsxin failed to open as an Excel file",undef,undef,undef,undef);
+    return ("$xlsxin failed to open as an spreadsheet file",undef,undef,undef,undef);
   }
   my $sheets = $book->[0]->{sheets} || 1;
   my $type   = $book->[0]->{type};
@@ -1497,13 +1497,13 @@ sub upload_qb {
   my $acctrow;
   while($acctrow = $sth->fetchrow_hashref()) {
     $donacct = trim($acctrow->{donacct});
-    $acctTotals->{$donacct} = [$acctrow->{acctdesc},0,$acctrow->{deductible},$acctrow->{level},$acctrow->{expinc}];
+    $acctTotals->{$donacct} = [$acctrow->{acctdesc},0,$acctrow->{deductible},$acctrow->{level},$acctrow->{incexp}];
   }
   ($trace & 64) && $sttrace->execute("Upload","Accounts",join(', ',(sort keys %$acctTotals)));
   #------------------------------
   # Get fund cards and aliases
   #------------------------------
-  $sth = $dbh->prepare("SELECT surname,cardnumber FROM borrowers WHERE categorycode='FUND'");
+  $sth = $dbh->prepare("SELECT surname,cardnumber FROM borrowers WHERE categorycode='$System{fund}'");
   my %fundAlias;
   $sth->execute;
   while (($donfund,$doncard) = $sth->fetchrow_array) {
@@ -1597,7 +1597,7 @@ sub upload_qb {
     $donaddress1 = ' ' unless $donaddress1;
 
     if (!$donname) {
-      $donname = "Unknown Donor";
+      $donname = $System{unknown};
     }
 
     # Add new account
@@ -1678,18 +1678,13 @@ sub upload_qb {
 
     #check for extending the expiry date
     my $expiryAcct = $acctTotals->{$acct}->[4];
+    ($trace & 64) && $sttrace->execute("Upload","check Expiry","($row) $acct chk $expiryAcct amt $donamt");
     if ($expiryAcct && ($donamt >= $expiryAcct)) {
       $dondate =~ m/(\d\d\d\d)-(\d\d)/;
       $newExpiry = UnixDate("last day of ".$months[$2-1]." in ".($1+1),"%Y-%m-%d");
+      ($trace & 64) && $sttrace->execute("Expiry update","$donamt > $expiryAcct","new $newExpiry, old $borrower->{dateexpiry}");
       if ($newExpiry gt $borrower->{dateexpiry}) {
         $categorycode = $borrower->{categorycode};
-        if ($categorycode eq 'OTHER') {
-          if (($address1 !~ /^\s*\d/) && $address2) {
-            $categorycode = 'FAM';
-          } else {
-            $categorycode = 'IND';
-          }
-        }
         if (!ModMember(borrowernumber=>$borrowernumber,categorycode=>$categorycode,dateexpiry=>$newExpiry)) {
           push @$updatedPatrons,[$doncard,$donname," ","Expiry Date $newExpiry not updated"];
         } else {
@@ -1741,26 +1736,33 @@ sub get_card {
   my $sttrace = $dbh->prepare("INSERT INTO bodatrace SET action=?,subaction=?,parm=?");
   ($trace & 2) && $sttrace->execute('get_card',"for $patron","got ".scalar %cards." cards");
   $address1 = trim($address1);
-  foreach $kcard (sort {$cards{$a}->{score} cmp $cards{$b}->{score}} keys %cards) {
-    $kaddress = trim($cards{$kcard}->{address});
-    if (!$address1 || !$kaddress || ((similarity($address1, $kaddress)) > .75)) {
-      return ($kcard,'Found');
+  if (scalar %cards) {
+    foreach $kcard (sort {$cards{$a}->{score} cmp $cards{$b}->{score}} keys %cards) {
+      $kaddress = trim($cards{$kcard}->{address});
+      if (!$address1 || !$kaddress || ((similarity($address1, $kaddress)) > .75)) {
+        return ($kcard,'Found');
+      }
     }
   }
   # No match, create one
+  $sttrace->execute("Categories","set",fix_html(Dumper(\%Categories)));
   my ($firstname,$surname,$suffix) = split_name($patron);
-  my $categorycode = ($firstname)?$Categories{ind}:$Categories{bus};
+  my $categorycode = ($firstname)?$System{ind}:$System{bus};
   $address1 = ' ' unless $address1;
   $zipcode = '00000' unless $zipcode;
   $city = ' ' unless $city;
   $state = ' ' unless $state;
   my $cardnumber = fixup_cardnumber(' ');
   $surname .= " $suffix" if $suffix;
+  $donbranch = $System{branch} unless $donbranch;
   %borrower = (firstname=>$firstname, surname=>$surname, address=>$address1,
                cardnumber=>$cardnumber, address2=>$address2, city=>$city,
                state=>$state,zipcode=>$zipcode,categorycode=>$categorycode,
                dateenrolled=>$dondate,dateexpired=>$dondate,branchcode=>$donbranch,privacy=>1);
-  my $borrowernumber = AddMember(%borrower);
+  ($trace & 2) && $sttrace->execute("Adding card","For $patron",fix_html(Dumper(\%borrower)));
+  my $borrowernumber = &AddMember(%borrower);
+  ($trace & 2) && $sttrace->execute("Added card","for $firstname $surname",
+                                    "card $cardnumber expiry $dondate category $categorycode");
   if (!$borrowernumber) {
     return 0;
   }
@@ -1922,16 +1924,17 @@ sub find_patron {
   #----------------------------------------
   # Try to find patron from name
   #----------------------------------------
-
+  ($firstname,$surname,$suffix) = split_name($patron);
   $korg = (substr($patron,0,1) eq '%');
   if ($korg) {
-    $ksur = $patron.'%';
+    $ksur = $surname.'%';
+    $ksur = '%'.$ksur unless $korg;
     $sth = $dbh->prepare("SELECT cardnumber, firstname, surname, ".
       "concat_ws(' ',streetnumber,address,streettype) address1, address2, city, state, zipcode ".
       "FROM borrowers WHERE surname like ? OR address like ? OR address2 like ?");
     $sth->execute($ksur,$ksur,$ksur);
   } else {
-    ($firstname,$surname,$suffix) = split_name($patron);
+
     $ksur = $surname.'%';
     #  Look up surname
     $sth = $dbh->prepare("SELECT cardnumber, firstname, surname, ".
@@ -1973,7 +1976,7 @@ sub find_patron {
 sub split_name {
   my $patron = shift;
   my ($firstname,$surname,$suffix);
-  if (businessName($patron)) { return ('',$patron,'');}
+  if (businessName($patron)) { return ('','%'.$patron,'');}
   my %args = (
     allow_reversed => 1,
   );
@@ -2012,7 +2015,7 @@ sub split_name {
 }
 sub businessName {
   my ($sn) = @_;
-
+  if (lc(trim($sn)) eq lc($System{unknown})) { return 1;}
   foreach my $flag (@businessFlag) {
     if ($sn =~ m/$flag/ ) { return 1;}
   }
@@ -2073,10 +2076,19 @@ sub configured {
 sub get_businessFlag {
   @businessFlag = ();
   my $dbh = C4::Context->dbh;
-  my $sth = $dbh->prepare("SELECT value FROM bodasystem WHERE name='business'");
+  my $sth = $dbh->prepare("SELECT value FROM bodasystem WHERE type='BusinessFlags'");
   $sth->execute;
   while (my($flag) = $sth->fetchrow_array) {
     push @businessFlag,$flag;
+  }
+}
+
+sub get_system_misc {
+  my $dbh = C4::Context->dbh;
+  my $sth = $dbh->prepare("SELECT name,value FROM bodasystem WHERE type='category'");
+  $sth->execute;
+  while (my($name,$value) = $sth->fetchrow_array) {
+    $System{$name} = $value;
   }
 }
 
@@ -2125,7 +2137,7 @@ sub ipath {
 
 sub get_funds {
   my $dbh = shift;
-  my $stfunds = $dbh->prepare("SELECT surname,cardnumber FROM borrowers WHERE categorycode='FUND'");
+  my $stfunds = $dbh->prepare("SELECT surname,cardnumber FROM borrowers WHERE categorycode='$System{fund}'");
   $stfunds->execute;
   my $funds = $stfunds->fetchall_arrayref;
   my $fundnicks = $dbh->prepare("SELECT QBname, fundcard  from bodafunds WHERE fundcard not like 'bf%'");

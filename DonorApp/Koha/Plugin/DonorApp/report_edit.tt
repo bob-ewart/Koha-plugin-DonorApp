@@ -178,7 +178,7 @@
       [% IF repdef.orderby == 'surname' %]
       <input type='radio' name='orderby' value='surname' checked >Surname&emsp;
       [% ELSE %]
-      <input type='radio' name='orderby' value='surname' >Last name&emsp;
+      <input type='radio' name='orderby' value='surname' >Surname&emsp;
       [% END %]
       [% IF repdef.orderby == 'total' %]
       <input type='radio' name='orderby' value='total' checked >Total&emsp;

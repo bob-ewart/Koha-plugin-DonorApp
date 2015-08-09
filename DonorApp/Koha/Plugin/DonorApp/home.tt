@@ -20,7 +20,7 @@
   [% IF permissions.donate %]
     <h3>Upload income transfer file</h3>
     <form method="post" enctype="multipart/form-data">
-    <p>Excel file to upload: <input type="file" name="excel" /></p>
+    <p>Transfer file to upload: <input type="file" name="excel" /></p>
     <p><input type="submit" name="action" value="Upload" /></p>
     <input type='hidden' name='method' value='[% METHOD %]' />
     <input type='hidden' name='class'  value='[% CLASS %]' />
