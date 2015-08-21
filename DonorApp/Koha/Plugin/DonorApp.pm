@@ -100,8 +100,7 @@ sub tool {
   my ( $self, $args ) = @_;
   my $message='';
   if (!configured()) {
-    configure($self);
-    return;
+    $message = create_tables($self);
   }
   my $cgi = $self->{cgi};
   my $dbh = C4::Context->dbh;
@@ -645,7 +644,8 @@ sub tool_reports {
     }
   }
 }
-
+ 
+ 
 sub tool_system {
   my ( $self, $message,$snperm,$action,$subaction,$trace) = @_;
   my $cgi = $self->{'cgi'};
@@ -659,7 +659,7 @@ sub tool_system {
   my $dbh = C4::Context->dbh;
   my $sttrace = $dbh->prepare("INSERT INTO bodatrace SET action=?,subaction=?,parm=?");
   ($trace & 32) && $sttrace->execute($action,$subaction,"Entered");
-  
+    
   ### Add new user from system_home;
   if ($subaction eq 'Add new user') {
     $name = $cgi->param('name');
@@ -706,7 +706,8 @@ sub tool_system {
 
 
   ### Delete system user from system_user.tt
-  } elsif ($subaction eq 'Delete system user') {
+  } 
+  elsif ($subaction eq 'Delete system user') {
     my $stdel = $dbh->prepare("DELETE FROM bodausers WHERE cardnumber=?");
     $stdel->execute($card);
     $subaction = 'System home';
@@ -714,7 +715,8 @@ sub tool_system {
 
 
   # update deductible flag and map_to fields in bodaaccts
-  } elsif ($subaction eq 'Update accounts') {
+  } 
+  elsif ($subaction eq 'Update accounts') {
     my $stacctup = $dbh->prepare("UPDATE bodaaccts SET incexp=?,map_to=?,deductible=? WHERE donacct=?");
     my @uaAccts = $cgi->param('account');
     my @uaIncexps  = $cgi->param('incexp');
@@ -732,7 +734,8 @@ sub tool_system {
     $subaction = 'Accounts';
     $message = "Accounts updated";
     
-  } elsif ($subaction eq 'Update transfer columns') {
+  } 
+  elsif ($subaction eq 'Update transfer columns') {
     $template = $self->get_template({ file => 'system_home.tt' });
     my @excelFields = ([qw(Address Address2 City State Zipcode Phone Email Memo Branch)],
                       [qw(Date Name Card_number Account Amount)]);
@@ -747,11 +750,12 @@ sub tool_system {
       ($trace & 32) && $sttrace->execute($action,$subaction,"$excelInt ".join(',',@excelCols));
     }
     $subaction = 'System home';
-    $message = "Excel columns updated";
+    $message = "Transfer columns updated";
   
 
   # show user for update  from system_home
-  } elsif ($subaction eq 'User update') {
+  } 
+  elsif ($subaction eq 'User update') {
     $template = $self->get_template({ file => 'system_user.tt' });
 
     # get data for current user
@@ -763,12 +767,12 @@ sub tool_system {
       $uperms{$_} = 1;
     }
     $subaction = 'Update';
+  } 
+  elsif ($subaction eq 'Set accounts') {
+    $template = $self->get_template({file => 'configure_home.tt' });
+    
   }
-
-  $sth = '';
-
-  ### logs from system_home
-  if ($subaction eq 'Report log') {
+  elsif ($subaction eq 'Report log') {
     $template = $self->get_template({ file => 'system_log.tt' });
     $sth = $dbh->prepare("SELECT repid ID,
                           report_name Report,
@@ -779,19 +783,22 @@ sub tool_system {
                           DATE(last_modified) Updated,
                           last_run Run FROM bodareports ORDER BY ID");
     $sth->execute();
-  } elsif ($subaction eq 'Use log') {
+  } 
+  elsif ($subaction eq 'Use log') {
     $template = $self->get_template({ file => 'system_log.tt' });
     $sth = $dbh->prepare("SELECT snuser User, loggedon Logged_On ".
                         "FROM bodalog ".
                         "WHERE loggedon >= SUBDATE(NOW(), INTERVAL 2 MONTH) ".
                         "ORDER BY loggedon desc");
-  } elsif ($subaction eq 'Accounts') {
+  } 
+  elsif ($subaction eq 'Modify accounts') {
     $template = $self->get_template({ file => 'system_accts.tt' });
     $sth = $dbh->prepare("SELECT donacct Account, acctdesc Description, deductible DED, incexp Update_expiry, map_to ".
                           "FROM bodaaccts order by qb desc,donacct");
   
     
-  } elsif ($subaction eq 'Transfer columns') {
+  } 
+  elsif ($subaction eq 'Set transfer columns') {
     $template = $self->get_template({ file => 'system_Excel.tt' });
     my $stexcel = $dbh->prepare("SELECT name,internal,value FROM bodasystem WHERE type='excel'");
     $stexcel->execute;
@@ -808,7 +815,74 @@ sub tool_system {
         $template->param('optionalFields',\@excelFields);
       }
     }
-  } elsif ($subaction eq 'Miscellaneous constants') {
+    #      
+    # upload the account description from spreadsheet file
+    #
+  } 
+  elsif ($subaction eq 'Upload account descriptions') {
+    $message = '';
+    my $xlsxin = '';
+    my $filename = scalar $cgi->param('excel');         # yes it can be any file
+    if ($filename) {
+      ($xlsxin,$message) = move_excel($filename,$cgi);
+    } else {
+      $message = "Account Description spreadsheet not specified";
+    }
+    my ($colacct,$coldesc,$colded,$colincexp,$colmap,$colqb);
+    my $book = ReadData($xlsxin);
+    if (!$book) {
+      $message = "$xlsxin failed to open as a spreadsheet file";
+    } else {
+      my $sheets = $book->[0]->{sheets} || 1;
+      while (!$book->[$sheets]->{maxcol}) {
+        $sheets--;
+        return "Can't find data in $xlsxin" unless $sheets;
+      }
+      my $sheet = $book->[$sheets];
+      my $maxCol = $sheet->{maxcol};
+      my $maxRow = $sheet->{maxrow};
+      my $cells = $sheet->{cell};
+      ($trace & 32) && $sttrace->execute("upload_accounts","opened","$xlsxin $maxRow x $maxCol");
+      my $inact = $dbh->prepare("INSERT INTO bodaaccts SET donacct=?,acctdesc=?,deductible=?,incexp=?,map_to=?,qb=?");
+      my ($donacct,$acctdesc,$deductible,$map_to,$incexp,$qb,$acctno);
+      $colacct = column2number(scalar $cgi->param('colacct'));
+      return "Column 'account' missing" unless defined($colacct);
+      $coldesc   = column2number(scalar $cgi->param('coldesc'));
+      $colded    = column2number(scalar $cgi->param('colded'));
+      $colincexp = column2number(scalar $cgi->param('colincexp'));
+      $colmap    = column2number(scalar $cgi->param('colmap'));
+      $colqb     = column2number(scalar $cgi->param('colqb'));
+      ($trace & 1024) && $sttrace->execute("Configure","Account columns",join(',',$colacct,$coldesc||'_',$colded||'_',
+                                                                              $colincexp||'_',$colmap||'_',$colqb||'_',));
+      $dbh->do("TRUNCATE bodaaccts");
+      
+      for (my $row = 2; $row <= $maxRow; $row++) {
+        $donacct = $cells->[$colacct]->[$row];
+        next unless $donacct;
+        if (defined($coldesc)) {
+          $acctdesc = $cells->[$coldesc]->[$row];
+          $acctno = $donacct;
+        } elsif ($donacct =~ m/\s*(\S+)\s+\S{0,2}\s*(\S.+)\s*$/) {
+          $acctno = $1;
+          $acctdesc = $2;
+        } else {
+          next;
+        }
+        $deductible = defined($colded)?$cells->[$colded]->[$row]:0;
+        $incexp = defined($colincexp)?$cells->[$colincexp]->[$row]:0;
+        $map_to = defined($colmap)?$cells->[$colmap]->[$row]:undef;
+        $qb     = defined($colqb)?$cells->[$colqb]->[$row]:1;
+        $inact->execute($acctno,$acctdesc,$deductible,$incexp,$map_to,$qb);
+        ($trace & 1024) && $sttrace->execute("Configure","Account","'$donacct' is '$acctno' desc '$acctdesc'");
+      }
+      
+      $message = 'Account descriptions uploaded' unless $message;
+    }
+    ($trace & 32) && $sttrace->execute("Configure","Upload accounts",$message);
+    $subaction = 'System home';
+    
+  } 
+  elsif ($subaction eq 'Miscellaneous constants') {
     $template = $self->get_template({ file => 'system_misc.tt' });
     my $stmisc = $dbh->prepare("SELECT name,value FROM bodasystem WHERE type=?");
     my (@miscBusinessFlags,%miscCategory,%miscAttribute,$miscName,$miscValue);
@@ -835,8 +909,8 @@ sub tool_system {
     ($trace & 32) && $sttrace->execute("System","Show attributes",fix_html(Dumper(\%miscAttribute)));
     
     
-  } elsif ($subaction eq 'Update miscellaneous constants') {
-    $template = $self->get_template({ file => 'system_home.tt' });
+  } 
+  elsif ($subaction eq 'Update miscellaneous constants') {
     $dbh->do("DELETE FROM bodasystem WHERE type = 'BusinessFlags'");
     my @businessFlag = $cgi->param('bflag');
     my $upSystem = $dbh->prepare("INSERT INTO bodasystem SET name='business',internal='array',type='BusinessFlags',value=?");
@@ -858,8 +932,7 @@ sub tool_system {
     $upSystem->execute(scalar($cgi->param('unknown')),'unknown','category');
     $message = 'Miscellaneous constants updated';
     $subaction = 'System home';
-  }
-  
+  }  
   # System home from many places
   if ($subaction eq 'System home') {
     $template = $self->get_template({ file => 'system_home.tt' });
@@ -1769,74 +1842,35 @@ sub get_card {
   return ($cardnumber,'Added');
 }
 
-
-
-#-------------------------------------
-# *** Configuration
-#-------------------------------------
-
-
-sub configure {
-  my ( $self, $args ) = @_;
+#
+# Create the tables and assign current user all permissions
+#
+sub create_tables {
+  my ( $self ) = @_;
   my $cgi = $self->{cgi};
   my $ipath = ipath();
   my ($template,$message);
   my $dbh = C4::Context->dbh;
-  my $trace = $self->retrieve_data('mytrace') || 1024;
-  my $sttrace = $dbh->prepare("INSERT INTO bodatrace SET action=?,subaction=?,parm=?");
-  my $action = scalar $cgi->param('action') || 'Home';
-  $action = 'Create tables' unless configured();
-  $self->go_home() if $action eq 'Done';
-  $template = $self->get_template({file =>'configure_home.tt'});
-  
-  #
-  # Create the tables and insert one user
-  #
-  if ($action eq 'Create tables') {
-    my $borrowernumber = C4::Context->userenv->{number};
-    my $borrower = GetMemberDetails($borrowernumber,0);
-    my $card = $borrower->{cardnumber};
-    my $name = $borrower->{userid};
-    $name = $borrower->{firstname} unless $name;
-    do_mysql_source($self,$ipath."/boda-table-create.sql",$trace);
-    if (configured()) {
-      do_mysql_source($self,$ipath."/boda-system.sql",$trace);
-      do_mysql_source($self,$ipath."/boda-accts.sql",$trace);
-      my $sth = $dbh->prepare("INSERT INTO bodausers SET cardnumber=?,snuser=?,permissions=?");
-      my $permissions = "donate,contact,group,system";
-      $sth->execute($card,$name,$permissions);
-      $message = "Donor tables created";
-      $action = "Home";
-    } else {
-      $message = "Donor tables not created. See koha-error.log";
-    }
-    $template->param('card',$card);
-    $template->param('name',$name);
-    #      
-    # upload the account description from spreadsheet file
-    #
-  } elsif ($action eq 'Upload account descriptions') {
-    $message = '';
-    my $xlsxin = '';
-    my $filename = scalar $cgi->param('excel');         # yes it can be any file
-    if ($filename) {
-      ($xlsxin,$message) = move_excel($filename,$cgi);
-    } else {
-      $message = "Account Description spreadsheet not specified";
-    }
-    $message = upload_accounts($self,$xlsxin,$trace) unless $message;
-    $message = 'Account descriptions uploaded' unless $message;
-    $sttrace->execute("Configure","Upload accounts",$message);
-    
-  } elsif ($action eq 'Home') {
-    $message = '';
+  my $borrowernumber = C4::Context->userenv->{number};
+  my $borrower = GetMemberDetails($borrowernumber,0);
+  my $card = $borrower->{cardnumber};
+  my $name = $borrower->{userid};
+  $name = $borrower->{firstname} unless $name;
+  do_mysql_source($self,$ipath."/boda-table-create.sql");
+  if (configured()) {
+    do_mysql_source($self,$ipath."/boda-system.sql");
+    do_mysql_source($self,$ipath."/boda-accts.sql");
+    my $sth = $dbh->prepare("INSERT INTO bodausers SET cardnumber=?,snuser=?,permissions=?");
+    my $permissions = "donate,contact,group,system";
+    $sth->execute($card,$name,$permissions);
+    $message = "Donor tables created, $name ($card) granted all permissions";
+  } else {
+    $message = "Donor tables not created. See koha-error.log";
   }
-  
-  $template->param('message',$message);
-  $template->param('ipath',$ipath);
-  print $cgi->header();
-  print $template->output();
+  return $message;
 }
+
+ 
 
 sub upload_accounts {
   my ($self,$xlsxin,$trace) = @_;
@@ -1894,13 +1928,11 @@ sub upload_accounts {
 sub do_mysql_source {
   my ($self,$file,$trace) = @_;
   my $dbh = C4::Context->dbh;
-  my $sttrace = $dbh->prepare("INSERT INTO bodatrace SET action=?,subaction=?,parm=?");
   open CRDB,"<",$file or warn "Can't open $file";
   while (my $cmd = <CRDB>) {
     $cmd =~ s/\;\*$//;
     $dbh->do($cmd);
   }
-  $sttrace->execute("Configure","do source",$file);
 }
 
 #-------------------------------------

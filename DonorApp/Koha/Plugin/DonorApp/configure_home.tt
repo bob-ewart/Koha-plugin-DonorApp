@@ -11,14 +11,10 @@
 <!-- breadcrumbs -->
 [% PROCESS "$ipath/boda_header.inc" %]
 
-
-
 <div id="doc3">
 
-[% IF card %]<p>User: [% name %] ([% card %]) granted all privileges</p>[% END %]
-
 <form method="post" enctype="multipart/form-data">
-<p>Account excel file to Upload: <input type="file" name="excel" /></p>
+<p>Account listing spreadsheet to Upload: <input type="file" name="excel" /></p>
 
 <table>
   <tr><td>Account number column</td><td><input type='text' name='colacct' value='C' /></td></tr>
@@ -34,14 +30,11 @@
 descriptions on the report creation page are sorted by this value decending so that old account are at the end of the list.
 Old accounts should be mapped to the equivalent new one.  Selecting that new account would automatically pick up the old one</p>
 <br />
-<p><input type="submit" name="action" value="Upload account descriptions" /></p>
+<p><input type="submit" name="subaction" value="Upload account descriptions" /></p>
+<input type='hidden' name='action' value='System update' />
 <input type='hidden' name='method' value='[% METHOD %]' />
 <input type='hidden' name='class'  value='[% CLASS %]' />
 </form><br />
 
-[% form %]
-  <input type='submit' name='action' value='Create tables' /> This will over write all Donor App tables including accounts<br />
-  <input type='submit' name='action' value='Done' /> with configuration, return to Koha<b />
-</form>
-  
+ 
 [% INCLUDE 'intranet-bottom.inc' %]

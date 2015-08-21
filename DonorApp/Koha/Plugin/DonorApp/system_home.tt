@@ -36,8 +36,9 @@
   <br />
   [% form %]
     <input type='hidden' name='action' value='System update' />
-    <input type='submit' name='subaction' value='Accounts' />to set account parameters<br />
-    <input type='submit' name='subaction' value='Transfer columns' />for accounting transfer file uploads<br />
+    <input type='submit' name='subaction' value='Set transfer columns' />for accounting transfer file uploads<br />
+    <input type='submit' name='subaction' value='Set accounts' /> to upload account list<br/>
+    <input type='submit' name='subaction' value='Modify accounts' /> to set deductible, increase expiry and mapping flags<br />
     <input type='submit' name='subaction' value='Miscellaneous constants' /><br />
     <input type='submit' name='subaction' value='Report log' /><br />
     <input type='submit' name='subaction' value='Use log' /><br />
