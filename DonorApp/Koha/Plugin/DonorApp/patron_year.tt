@@ -31,7 +31,7 @@
         <td>[% r.dondate %]</td>
         <td style='text-align:right'>[% r.donamt %]</td>
         <td>[% r.description %]</td>
-        <td>[% r.acctdesc %]</td>
+        <td>[% r.account %]</td>
         [% IF r.deductible %] <td>Yes</td>
         [% ELSE %] <td>No</td>[% END %]
         <td>[% r.fund %]</td>

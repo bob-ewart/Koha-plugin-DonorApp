@@ -237,15 +237,15 @@ sub tool_upload {
       my $newCard = fixup_cardnumber(' ');
       my %borrower = (surname=>$fundname,address=>' ',cardnumber=>$newCard,
                       city=>' ',zipcode=>'00000',categorycode=>$System{fund},
-                      branchcode=>'$categories{branch}',privacy=>1);
-      ($trace & 64) && $sttrace->execute("Upload","Add Fund","$fundname, $newCard");
+                      branchcode=>$System{branch},userid=>$newCard,privacy=>1);
+      ($trace & 64) && $sttrace->execute("Upload","Add Fund","$fundname, $newCard,$borrower{branchcode}, $borrower{categorycode}");
       if (! &AddMember(%borrower)) {
         $message .= "$fundname error, ";
       } else {
         $stdf->execute($newCard,$fundcard);
         $stdc->execute($newCard,$fundcard);
         $stf->execute($newCard,$fundcard);
-        $message .= "$fundname added as $newCard, ";
+        $message .= "<br /> $fundname added as $newCard";
       }
     }
     $self->tool_home($message,$snperm,'Home',' ',$trace);
@@ -440,14 +440,16 @@ sub tool_year {
   $dbh = C4::Context->dbh;
   my $sttrace = $dbh->prepare("INSERT INTO bodatrace SET action=?,subaction=?,parm=?");
   if ($borrower->{categorycode} eq $System{fund}) {
-    $sth = $dbh->prepare("SELECT dondate,donamt,description,acctdesc,deductible,cardnumber,fund ".
-                          "FROM bodadonations d left join bodaaccts a on (d.donacct = a.donacct) ".
-                          " WHERE (cardnumber = ? or fund=?) AND year(dondate) = ? ORDER BY dondate");
+    $sth = $dbh->prepare("SELECT dondate,donamt,description,concat_ws(' - ',d.donacct,acctdesc) account, ".
+                         "deductible,cardnumber,fund ".
+                         "FROM bodadonations d left join bodaaccts a on (d.donacct = a.donacct) ".
+                         " WHERE (cardnumber = ? or fund=?) AND year(dondate) = ? ORDER BY dondate");
     $sth->execute($card,$card,$year);
   } else {
-    $sth = $dbh->prepare("SELECT dondate,donamt,description,acctdesc,deductible,cardnumber,fund ".
-                          "FROM bodadonations d left join bodaaccts a on (d.donacct = a.donacct) ".
-                          " WHERE cardnumber = ? AND year(dondate) = ? ORDER BY dondate");
+    $sth = $dbh->prepare("SELECT dondate,donamt,description,concat_ws(' - ',d.donacct,acctdesc) account,".
+                         "deductible,cardnumber,fund ".
+                         "FROM bodadonations d left join bodaaccts a on (d.donacct = a.donacct) ".
+                         " WHERE cardnumber = ? AND year(dondate) = ? ORDER BY dondate");
     $sth->execute($card,$year);
   }
   my ($total,$ded);
@@ -717,21 +719,29 @@ sub tool_system {
   # update deductible flag and map_to fields in bodaaccts
   } 
   elsif ($subaction eq 'Update accounts') {
-    my $stacctup = $dbh->prepare("UPDATE bodaaccts SET incexp=?,map_to=?,deductible=? WHERE donacct=?");
-    my @uaAccts = $cgi->param('account');
-    my @uaIncexps  = $cgi->param('incexp');
-    my @uaMap_tos  = $cgi->param('map_to');
-    my (%uaAccounts,$uaAccount,$uaIncexp,$uaMap_to,$uaDed);
-    for (my $i=0; $i<@uaAccts; $i++) {
-      $uaAccounts{$uaAccts[$i]} = [$uaIncexps[$i],$uaMap_tos[$i],0];
+    my $stacctup = $dbh->prepare("UPDATE bodaaccts SET deductible=?,incexp=?,map_to=? WHERE donacct=?");
+    my $stacctnew = $dbh->prepare("INSERT INTO bodaaccts SET donacct=?,acctdesc=?,deductible=?,incexp=?,map_to=?,qb=1");
+    my ($uaAccount,$uaDescription,$uaDed,$uaIncexp,$uaMap_to,$n);
+    for ($n = 1; $n < 1000; $n++) {
+      $uaAccount = $cgi->param("account".$n);
+      last unless $uaAccount;
+      $uaDed         = $cgi->param("ded".$n) || 0;
+      $uaIncexp      = $cgi->param("incexp".$n);
+      $uaMap_to      = $cgi->param("map_to".$n);
+      $stacctup->execute($uaDed,$uaIncexp,$uaMap_to,$uaAccount);
+      $sttrace->execute("System","Update Accounts","$uaAccount,$uaDed,$uaIncexp,$uaMap_to.") if ($n < 6) && ($trace & 32);
     }
-    my @uaDeds = $cgi->param('ded');
-    foreach (@uaDeds) { $uaAccounts{$_}->[2] = 1;}
-    
-    foreach my $uaAcct (keys %uaAccounts) {
-      $stacctup->execute(@{$uaAccounts{$uaAcct}},$uaAcct);
+    for ($n = 1000; $n < 1005; $n++) {
+      $uaAccount = $cgi->param("account".$n);
+      last unless $uaAccount;
+      $uaDescription = $cgi->param("description".$n);
+      $uaDed         = $cgi->param("ded".$n) || 0;
+      $uaIncexp      = $cgi->param("incexp".$n);
+      $uaMap_to      = $cgi->param("map_to".$n);
+      $stacctnew->execute($uaAccount,$uaDescription,$uaDed,$uaIncexp,$uaMap_to);
+      ($trace & 32) && $sttrace->execute("System","Add Accounts","$uaAccount,$uaDescription,$uaDed,$uaIncexp,$uaMap_to.");
     }
-    $subaction = 'Accounts';
+    $subaction = 'System home';
     $message = "Accounts updated";
     
   } 
@@ -1811,6 +1821,7 @@ sub get_card {
   $address1 = trim($address1);
   if (scalar %cards) {
     foreach $kcard (sort {$cards{$a}->{score} cmp $cards{$b}->{score}} keys %cards) {
+      return ($kcard,'Found') if $cards{$kcard}->{score} >.95;
       $kaddress = trim($cards{$kcard}->{address});
       if (!$address1 || !$kaddress || ((similarity($address1, $kaddress)) > .75)) {
         return ($kcard,'Found');
@@ -1831,9 +1842,10 @@ sub get_card {
   %borrower = (firstname=>$firstname, surname=>$surname, address=>$address1,
                cardnumber=>$cardnumber, address2=>$address2, city=>$city,
                state=>$state,zipcode=>$zipcode,categorycode=>$categorycode,
-               dateenrolled=>$dondate,dateexpired=>$dondate,branchcode=>$donbranch,privacy=>1);
+               dateenrolled=>$dondate,userid=>$cardnumber,branchcode=>$donbranch,privacy=>1);
   ($trace & 2) && $sttrace->execute("Adding card","For $patron",fix_html(Dumper(\%borrower)));
   my $borrowernumber = &AddMember(%borrower);
+  ModMember(borrowernumber=>$borrowernumber,dateexpiry=>$dondate);
   ($trace & 2) && $sttrace->execute("Added card","for $firstname $surname",
                                     "card $cardnumber expiry $dondate category $categorycode");
   if (!$borrowernumber) {
