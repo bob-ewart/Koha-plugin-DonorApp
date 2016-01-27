@@ -1821,9 +1821,12 @@ sub get_card {
   $address1 = trim($address1);
   if (scalar %cards) {
     foreach $kcard (sort {$cards{$a}->{score} cmp $cards{$b}->{score}} keys %cards) {
-      return ($kcard,'Found') if $cards{$kcard}->{score} >.95;
+      ($trace & 2) && $sttrace->execute('get_card',"Score ".$kcard,$cards{$kcard}->{score}." surname ".
+                                        $cards{$kcard}->{surname}." at ".$cards{$kcard}->{address});
+      return ($kcard,'Found') if $cards{$kcard}->{score} >95;
       $kaddress = trim($cards{$kcard}->{address});
       if (!$address1 || !$kaddress || ((similarity($address1, $kaddress)) > .75)) {
+        ($trace & 2) && $sttrace->execute('get_card',"address","'$address1' vs '$kaddress'");
         return ($kcard,'Found');
       }
     }
@@ -2011,7 +2014,7 @@ sub find_patron {
       $cards{$kcard} = $bcards{$kcard};
     }
   }
-  %cards = %bcards unless %cards;
+  #%cards = %bcards unless %cards;
   my $cardDump = Dumper(%cards);
   ($trace & 2) && $sttrace->execute('get_name','returning',"cards: $cardDump");
   return %cards;
